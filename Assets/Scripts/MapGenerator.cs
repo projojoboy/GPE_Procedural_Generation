@@ -1,6 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.Threading;
 using UnityEngine;
 
 public class MapGenerator : MonoBehaviour
@@ -12,8 +9,12 @@ public class MapGenerator : MonoBehaviour
 
     private GameObject[] tileArray;
 
+    private GameObject tileParent = null;
+
     private void Start()
     {
+        //Random.InitState(271310);
+
         map = new int[5, 5] {
             { 0, 0, 0, 0, 0 },
             { 0, 2, 1, 1, 0 },
@@ -22,16 +23,7 @@ public class MapGenerator : MonoBehaviour
             { 0, 0, 0, 0, 0 }
         };
 
-        tileArray = new GameObject[map.GetLength(0) * map.GetLength(1)];
-        for (int x = 0; x < map.GetLength(0); x++)
-        {
-            for (int y = 0; y < map.GetLength(1); y++)
-            {
-                var tile = Instantiate(tiles[map[x, y]], new Vector3(x, 0, y), Quaternion.identity);
-                tileArray[x * map.GetLength(1) + y] = tile;
-                Debug.Log(x * map.GetLength(1) + y);
-            }
-        }
+        DrawWorld();
     }
 
     private void Update()
@@ -44,6 +36,7 @@ public class MapGenerator : MonoBehaviour
         }
 
         if (Input.GetKeyDown(KeyCode.P)){
+            Debug.Log(map.GetLength(0));
             map = SmoothenWorld(map);
 
             DrawWorld();
@@ -60,7 +53,6 @@ public class MapGenerator : MonoBehaviour
                 // [b][t][c]
                 // [ ][d][ ]
                 int t = oldWorld[x, y];
-                Debug.Log(oldWorld.GetLength(1) - 1 + " " + x + " " +  (y + 1));
                 int a = y == oldWorld.GetLength(1) - 1 ? 0 : oldWorld[x, y + 1];
                 int b = x == 0 ? 0 : oldWorld[x - 1, y];
                 int c = x == oldWorld.GetLength(0) - 1 ? 0 : oldWorld[x + 1, y];
@@ -165,12 +157,18 @@ public class MapGenerator : MonoBehaviour
 
     private void DrawWorld()
     {
+        if (tileParent)
+            Destroy(tileParent);
+        
+        tileParent = new GameObject("World");
         tileArray = new GameObject[map.GetLength(0) * map.GetLength(1)];
+        
         for (int x = 0; x < map.GetLength(0); x++)
         {
             for (int y = 0; y < map.GetLength(1); y++)
             {
                 var tile = Instantiate(tiles[map[x, y]], new Vector3(x, 0, y), Quaternion.identity);
+                tile.transform.parent = tileParent.transform;
                 tileArray[x * map.GetLength(1) + y] = tile;
             }
         }
