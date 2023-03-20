@@ -1,20 +1,24 @@
 using UnityEngine;
 
+[RequireComponent(typeof(MapVisualizer))]
 public class MapGenerator : MonoBehaviour
 {
+    [SerializeField]
+    private int resampleAmount = 5;
+    [SerializeField]
+    private int smoothenAmount = 3;
+
     private int[,] map;
 
-    [SerializeField]
-    private GameObject[] tiles;
+    private MapVisualizer mv = null;
 
-    private GameObject[] tileArray;
-
-    private GameObject tileParent = null;
+    private void Awake()
+    {
+        mv = GetComponent<MapVisualizer>();
+    }
 
     private void Start()
     {
-        //Random.InitState(271310);
-
         map = new int[5, 5] {
             { 0, 0, 0, 0, 0 },
             { 0, 2, 1, 1, 0 },
@@ -23,24 +27,10 @@ public class MapGenerator : MonoBehaviour
             { 0, 0, 0, 0, 0 }
         };
 
-        DrawWorld();
-    }
-
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            map = ResampleWorld(map, map.GetLength(0) * 2 - 1);
-
-            DrawWorld();
-        }
-
-        if (Input.GetKeyDown(KeyCode.P)){
-            Debug.Log(map.GetLength(0));
-            map = SmoothenWorld(map);
-
-            DrawWorld();
-        }
+        for (int i = 0; i < resampleAmount; i++) map = ResampleWorld(map, map.GetLength(0) * 2 - 1);
+        for (int i = 0; i < smoothenAmount; i++) map = SmoothenWorld(map);
+        
+        mv.VisualizeMap(map);
     }
 
     int[,] SmoothenWorld(int[,] oldWorld)
@@ -75,11 +65,6 @@ public class MapGenerator : MonoBehaviour
 
         int xSize = oldWorld.GetLength(0);
         int ySize = oldWorld.GetLength(1);
-
-        int new_xSize = newWorld.GetLength(0);
-        int new_ySize = newWorld.GetLength(1);
-
-        //Log.Add($"Resampling from {xSize},{ySize} to {new_xSize},{new_ySize}");
 
         for (int y = 0; y < ySize; y++)
         {
@@ -153,26 +138,5 @@ public class MapGenerator : MonoBehaviour
         {
             return d;
         }
-    }
-
-    private void DrawWorld()
-    {
-        if (tileParent)
-            Destroy(tileParent);
-        
-        tileParent = new GameObject("World");
-        tileArray = new GameObject[map.GetLength(0) * map.GetLength(1)];
-        
-        for (int x = 0; x < map.GetLength(0); x++)
-        {
-            for (int y = 0; y < map.GetLength(1); y++)
-            {
-                var tile = Instantiate(tiles[map[x, y]], new Vector3(x, 0, y), Quaternion.identity);
-                tile.transform.parent = tileParent.transform;
-                tileArray[x * map.GetLength(1) + y] = tile;
-            }
-        }
-
-        Debug.Log(map.GetLength(0) + map.GetLength(1));
     }
 }
