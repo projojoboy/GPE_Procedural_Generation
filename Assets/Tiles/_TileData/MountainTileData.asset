@@ -15,3 +15,10 @@ MonoBehaviour:
   tiles:
   - {fileID: 11400000, guid: 0d97dfb6ac008db40b7d022f63e133a3, type: 2}
   biome: 3
+  canSpawnResources: 1
+  resources:
+  - {fileID: 6093442349281841385, guid: b320ed30771f12243933e32c82b7bd69, type: 3}
+  - {fileID: 5748224606256689601, guid: 17d669f0d7e599b4b8a9b4b47cdf5a28, type: 3}
+  - {fileID: 2206126137038769172, guid: df0f33cb323943f4098bcfde5afcafbd, type: 3}
+  - {fileID: 1994354950545224827, guid: effc36838424d6a46a8f7fad4da9f548, type: 3}
+  resourceDensity: 0.08

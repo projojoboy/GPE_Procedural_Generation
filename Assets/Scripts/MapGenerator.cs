@@ -19,11 +19,19 @@ public class MapGenerator : MonoBehaviour
 
     private void Start()
     {
+        //map = new int[5, 5] {
+        //    { 0, 0, 0, 0, 0 },
+        //    { 0, 2, 1, 1, 0 },
+        //    { 0, 2, 2, 2, 0 },
+        //    { 0, 2, 3, 3, 0 },
+        //    { 0, 0, 0, 0, 0 }
+        //};
+
         map = new int[5, 5] {
             { 0, 0, 0, 0, 0 },
-            { 0, 2, 1, 1, 0 },
-            { 0, 2, 2, 2, 0 },
-            { 0, 2, 3, 3, 0 },
+            { 0, Random.Range(1,4), Random.Range(1,4), Random.Range(1,4), 0 },
+            { 0, Random.Range(1,4), Random.Range(1,4), Random.Range(1,4), 0 },
+            { 0, Random.Range(1,4), Random.Range(1,4), Random.Range(1,4), 0 },
             { 0, 0, 0, 0, 0 }
         };
 
