@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 [RequireComponent(typeof(MapVisualizer))]
@@ -7,6 +8,8 @@ public class MapGenerator : MonoBehaviour
     private int resampleAmount = 5;
     [SerializeField]
     private int smoothenAmount = 3;
+    [SerializeField]
+    private int chunkSize = 16;
 
     private int[,] map;
 
@@ -36,14 +39,15 @@ public class MapGenerator : MonoBehaviour
         };
 
         for (int i = 0; i < resampleAmount; i++) map = ResampleWorld(map, map.GetLength(0) * 2 - 1);
-        for (int i = 0; i < smoothenAmount; i++) map = SmoothenWorld(map);
-        
+        map = CreateChunks(map);
+        //for (int i = 0; i < smoothenAmount; i++) map = SmoothenWorld(map);
+        Debug.Log("test");
         mv.VisualizeMap(map);
     }
 
     int[,] SmoothenWorld(int[,] oldWorld)
     {
-        for(int x = 0; x < oldWorld.GetLength(0); x++)
+        for (int x = 0; x < oldWorld.GetLength(0); x++)
         {
             for (int y = 0; y < oldWorld.GetLength(1); y++)
             {
@@ -63,10 +67,48 @@ public class MapGenerator : MonoBehaviour
                 oldWorld[x, y] = t;
             }
         }
-        
+
         return oldWorld;
     }
-    
+
+    int[,] CreateChunks(int[,] oldWorld)
+    {
+        int[,] newWorld = new int[oldWorld.GetLength(0) * chunkSize, oldWorld.GetLength(1) * chunkSize];
+        Debug.Log(oldWorld.GetLength(0) + " " + newWorld.GetLength(0) + " " + oldWorld.GetLength(1) + " " + newWorld.GetLength(1));
+        int chunksAmount = oldWorld.Length;
+        Debug.Log(chunksAmount);
+
+        for (int x = 0; x < oldWorld.GetLength(0); x++)
+        {
+            for (int y = 0; y < oldWorld.GetLength(0); y++)
+            {
+                // Tile #1 from the old world(Should be water)
+                
+                for (int cx = 0; cx < chunkSize; cx++)
+                {
+                    for (int cy = 0; cy < chunkSize; cy++)
+                    {
+                        newWorld[x + cx, y + cy] = oldWorld[x, y];
+                    }
+                }
+            }
+        }
+
+        //for (int c = 0; c < chunkSize; c++)
+        //{
+        //    for (int x = 0; x < oldWorld.GetLength(0); x++)
+        //    {
+        //        for (int y = 0; y < oldWorld.GetLength(1); y++)
+        //        {
+        //            newWorld[x + c, y + c] = oldWorld[x, y];
+        //            Debug.Log(newWorld[x + c, y + c] + " " + oldWorld[x, y]);
+        //        }
+        //    }
+        //}
+        Debug.Log("exit");
+        return newWorld;
+    }
+
     int[,] ResampleWorld(int[,] oldWorld, int sampleSize)
     {
         int[,] newWorld = new int[sampleSize, sampleSize];
@@ -129,7 +171,7 @@ public class MapGenerator : MonoBehaviour
     int CoinFlip(int a, int b, int c, int d)
     {
         float val = Random.value;
-        
+
         if (val < 0.25f && val >= 0.50f)
         {
             return a;
@@ -145,6 +187,18 @@ public class MapGenerator : MonoBehaviour
         else
         {
             return d;
+        }
+    }
+
+    private void OnDrawGizmos()
+    {
+        for (int x = 0; x < 50; x++)
+        {
+            for (int y = 0; y < 50; y++)
+            {
+                Gizmos.color = Color.green;
+                Gizmos.DrawWireCube(new Vector3((chunkSize / 2) + (chunkSize * x), 0, (chunkSize / 2) + (chunkSize * y)), new Vector3(chunkSize, 1, chunkSize));
+            }
         }
     }
 }
