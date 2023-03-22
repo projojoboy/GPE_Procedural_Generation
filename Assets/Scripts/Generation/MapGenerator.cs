@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
@@ -11,13 +12,17 @@ public class MapGenerator : MonoBehaviour
     [SerializeField]
     private int chunkSize = 16;
 
+    private Dictionary<Vector2, int[,]> chunkData;
+
     private int[,] map;
 
     private MapVisualizer mv = null;
+    private WorldManager wm = null;
 
     private void Awake()
     {
         mv = GetComponent<MapVisualizer>();
+        wm = FindObjectOfType<WorldManager>();
     }
 
     private void Start()
@@ -40,8 +45,9 @@ public class MapGenerator : MonoBehaviour
 
         for (int i = 0; i < resampleAmount; i++) map = ResampleWorld(map, map.GetLength(0) * 2 - 1);
         map = CreateChunks(map);
-        //for (int i = 0; i < smoothenAmount; i++) map = SmoothenWorld(map);
-        Debug.Log("test");
+        for (int i = 0; i < smoothenAmount; i++) map = SmoothenWorld(map);
+
+        wm.SetChunkData(chunkData, chunkSize);
         mv.VisualizeMap(map);
     }
 
@@ -73,39 +79,43 @@ public class MapGenerator : MonoBehaviour
 
     int[,] CreateChunks(int[,] oldWorld)
     {
-        int[,] newWorld = new int[oldWorld.GetLength(0) * chunkSize, oldWorld.GetLength(1) * chunkSize];
-        Debug.Log(oldWorld.GetLength(0) + " " + newWorld.GetLength(0) + " " + oldWorld.GetLength(1) + " " + newWorld.GetLength(1));
-        int chunksAmount = oldWorld.Length;
-        Debug.Log(chunksAmount);
+        chunkData = new Dictionary<Vector2, int[,]>();
 
-        for (int x = 0; x < oldWorld.GetLength(0); x++)
+        int oldWidth = oldWorld.GetLength(0);
+        int oldHeight = oldWorld.GetLength(1);
+        int newWidth = oldWidth * chunkSize;
+        int newHeight = oldHeight * chunkSize;
+        int[,] newWorld = new int[newWidth, newHeight];
+
+        for (int x = 0; x < oldWidth; x++)
         {
-            for (int y = 0; y < oldWorld.GetLength(0); y++)
+            for (int y = 0; y < oldHeight; y++)
             {
-                // Tile #1 from the old world(Should be water)
-                
+                int newX = x * chunkSize;
+                int newY = y * chunkSize;
+                int tile = oldWorld[x, y];
+
                 for (int cx = 0; cx < chunkSize; cx++)
                 {
                     for (int cy = 0; cy < chunkSize; cy++)
                     {
-                        newWorld[x + cx, y + cy] = oldWorld[x, y];
+                        int newTileX = newX + cx;
+                        int newTileY = newY + cy;
+                        newWorld[newTileX, newTileY] = tile;
+
+                        if (tile != 0)
+                        {
+                            Vector2 chunkPos = new Vector2(x, y);
+                            if (!chunkData.ContainsKey(chunkPos))
+                                chunkData.Add(chunkPos, new int[chunkSize, chunkSize]);
+
+                            chunkData[chunkPos][cx, cy] = tile;
+                        }
                     }
                 }
             }
         }
 
-        //for (int c = 0; c < chunkSize; c++)
-        //{
-        //    for (int x = 0; x < oldWorld.GetLength(0); x++)
-        //    {
-        //        for (int y = 0; y < oldWorld.GetLength(1); y++)
-        //        {
-        //            newWorld[x + c, y + c] = oldWorld[x, y];
-        //            Debug.Log(newWorld[x + c, y + c] + " " + oldWorld[x, y]);
-        //        }
-        //    }
-        //}
-        Debug.Log("exit");
         return newWorld;
     }
 

@@ -10,15 +10,18 @@ public class WorldManager : MonoBehaviour
 
     [SerializeField]
     private int seed = 1;
-    
+
     private Tilemap map = null;
 
     [SerializeField]
     private List<TileData> tileDatas = null;
 
     private Dictionary<TileBase, TileData> dataFromTiles;
+    private Dictionary<Vector2, int[,]> chunkData;
 
     private int[,] worldMap = null;
+
+    private int chunkSize = 0;
 
     private void Awake()
     {
@@ -30,12 +33,12 @@ public class WorldManager : MonoBehaviour
     {
         worldMap = m;
     }
-
+    
     public void AssignTileData()
     {
         map = FindObjectOfType<Tilemap>();
         dataFromTiles = new Dictionary<TileBase, TileData>();
-        
+
         foreach (var tileData in tileDatas)
         {
             foreach (var tile in tileData.tiles)
@@ -47,14 +50,14 @@ public class WorldManager : MonoBehaviour
         CalculateResourceSpawns();
     }
 
-    public TileBase GetCurrectTile(Vector3Int pos) 
+    public TileBase GetCurrectTile(Vector3Int pos)
     {
         return map.GetTile(map.WorldToCell(pos));
     }
 
     private void CalculateResourceSpawns()
     {
-        GameObject resParent = new GameObject("Resource Parent");
+        GameObject resParent = new("Resource Parent");
         resParent.transform.position = Vector3.zero;
 
         for (int i = 0; i < worldMap.GetLength(0); i++)
@@ -80,7 +83,9 @@ public class WorldManager : MonoBehaviour
             }
         }
     }
-    
+
+    public void SetChunkData(Dictionary<Vector2, int[,]> data, int cz) { chunkData = data; chunkSize = cz; }
+    public void GetChunkData(out Dictionary<Vector2, int[,]> data, out int chunkSize) { data = chunkData; chunkSize = this.chunkSize; }
     static int GetWorldSeed() { return worldSeed; }
     static void SetWorldSeed(int s) { worldSeed = s; }
 }
