@@ -87,5 +87,5 @@ public class WorldManager : MonoBehaviour
     public void SetChunkData(Dictionary<Vector2, int[,]> data, int cz) { chunkData = data; chunkSize = cz; }
     public void GetChunkData(out Dictionary<Vector2, int[,]> data, out int chunkSize) { data = chunkData; chunkSize = this.chunkSize; }
     static int GetWorldSeed() { return worldSeed; }
-    static void SetWorldSeed(int s) { worldSeed = s; }
+    public static void SetWorldSeed(int s) { worldSeed = s; }
 }

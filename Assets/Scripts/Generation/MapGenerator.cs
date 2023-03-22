@@ -12,6 +12,17 @@ public class MapGenerator : MonoBehaviour
     [SerializeField]
     private int chunkSize = 16;
 
+    [Header("Biome %")]
+    [SerializeField]
+    [Range(0, 100)]
+    private Vector2Int forestPercentRange = new(0, 70);
+    [SerializeField]
+    [Range(0, 100)]
+    private Vector2Int desertPercentRange = new(70, 85);
+    [SerializeField]
+    [Range(0, 100)]
+    private Vector2Int mountainPercentRange = new(85, 100);
+
     private Dictionary<Vector2, int[,]> chunkData;
 
     private int[,] map;
@@ -27,21 +38,7 @@ public class MapGenerator : MonoBehaviour
 
     private void Start()
     {
-        //map = new int[5, 5] {
-        //    { 0, 0, 0, 0, 0 },
-        //    { 0, 2, 1, 1, 0 },
-        //    { 0, 2, 2, 2, 0 },
-        //    { 0, 2, 3, 3, 0 },
-        //    { 0, 0, 0, 0, 0 }
-        //};
-
-        map = new int[5, 5] {
-            { 0, 0, 0, 0, 0 },
-            { 0, Random.Range(1,4), Random.Range(1,4), Random.Range(1,4), 0 },
-            { 0, Random.Range(1,4), Random.Range(1,4), Random.Range(1,4), 0 },
-            { 0, Random.Range(1,4), Random.Range(1,4), Random.Range(1,4), 0 },
-            { 0, 0, 0, 0, 0 }
-        };
+        map = GenerateWorld();
 
         for (int i = 0; i < resampleAmount; i++) map = ResampleWorld(map, map.GetLength(0) * 2 - 1);
         map = CreateChunks(map);
@@ -49,6 +46,61 @@ public class MapGenerator : MonoBehaviour
 
         wm.SetChunkData(chunkData, chunkSize);
         mv.VisualizeMap(map);
+    }
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.P))
+        {
+            WorldManager.SetWorldSeed(Random.Range(0, 1000000000));
+            map = GenerateWorld();
+
+            for (int i = 0; i < resampleAmount; i++) map = ResampleWorld(map, map.GetLength(0) * 2 - 1);
+            map = CreateChunks(map);
+            for (int i = 0; i < smoothenAmount; i++) map = SmoothenWorld(map);
+
+            wm.SetChunkData(chunkData, chunkSize);
+            mv.VisualizeMap(map);
+        }
+    }
+
+    private int[,] GenerateWorld()
+    {
+        map = new int[5, 5];
+
+        int lengthX = map.GetLength(0);
+        int lengthY = map.GetLength(1);
+
+        int[] t = new int[4];
+
+        // Populate map
+        for (int x = 0; x < lengthX; x++)
+        {
+            for (int y = 0; y < lengthY; y++)
+            {
+                // If side, make water biome. Else, make random biome
+                if ((x == 0 || x == lengthX - 1) || (y == 0 || y == lengthY - 1))
+                    map[x, y] = 0;
+                else
+                {
+                    map[x, y] = GetRandomBiome();
+                    t[map[x, y]]++;
+                }
+            }
+        }
+
+        for (int i = 0; i < t.Length; i++)
+        {
+            if (t[i] == 0)
+            {
+                int replace = GetHighestValuePosition(t);
+
+                Vector2Int pos = GetRandomTile(lengthX, lengthY, replace);
+                map[pos.x, pos.y] = i;
+            }
+        }
+
+        return map;
     }
 
     int[,] SmoothenWorld(int[,] oldWorld)
@@ -198,6 +250,53 @@ public class MapGenerator : MonoBehaviour
         {
             return d;
         }
+    }
+
+    private bool IsBetween(int x, int y, int point) { return point >= x && point < y; }
+
+    private int GetHighestValuePosition(int[] arr)
+    {
+        int loc = 0;
+        int max = 0;
+
+        for (int i = 0; i < arr.Length; i++)
+        {
+            if (arr[i] > max)
+            {
+                max = arr[i];
+                loc = i;
+            }
+        }
+
+        return loc;
+    }
+
+    private Vector2Int GetRandomTile(int lengthX, int lengthY, int overwritableBiome)
+    {
+        int i = 99;
+        Vector2Int pos = new(1, 1);
+
+        while (i != overwritableBiome)
+        {
+            pos = new(Random.Range(1, lengthX - 1), Random.Range(1, lengthY - 1));
+            i = map[pos.x, pos.y];
+        }
+
+        return pos;
+    }
+
+    private int GetRandomBiome()
+    {
+        int biome = Random.Range(0, 100);
+
+        if (IsBetween(forestPercentRange.x, forestPercentRange.y, biome))
+            return 2;
+        else if (IsBetween(desertPercentRange.x, desertPercentRange.y, biome))
+            return 1;
+        else if (IsBetween(mountainPercentRange.x, mountainPercentRange.y, biome))
+            return 3;
+
+        return 0;
     }
 
     private void OnDrawGizmos()

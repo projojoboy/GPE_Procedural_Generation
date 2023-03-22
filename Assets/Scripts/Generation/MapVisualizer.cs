@@ -14,6 +14,9 @@ public class MapVisualizer : MonoBehaviour
 
     public void VisualizeMap(int[,] m)
     {
+        if(FindObjectOfType<Grid>())
+            Destroy(FindObjectOfType<Grid>().gameObject);
+        
         GameObject map = Instantiate(grid, Vector3.zero, Quaternion.identity);
 
         Tilemap tm = map.GetComponentInChildren<Tilemap>();
