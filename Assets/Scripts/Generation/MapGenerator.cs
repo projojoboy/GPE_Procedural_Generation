@@ -14,13 +14,10 @@ public class MapGenerator : MonoBehaviour
 
     [Header("Biome %")]
     [SerializeField]
-    [Range(0, 100)]
     private Vector2Int forestPercentRange = new(0, 70);
     [SerializeField]
-    [Range(0, 100)]
     private Vector2Int desertPercentRange = new(70, 85);
     [SerializeField]
-    [Range(0, 100)]
     private Vector2Int mountainPercentRange = new(85, 100);
 
     private int[,] map;
@@ -32,12 +29,27 @@ public class MapGenerator : MonoBehaviour
     {
         mv = GetComponent<MapVisualizer>();
         wm = FindObjectOfType<WorldManager>();
-        
-        map = GenerateWorld();
 
-        for (int i = 0; i < resampleAmount; i++) map = ResampleWorld(map, map.GetLength(0) * 2 - 1);
-        map = CreateChunks(map);
-        for (int i = 0; i < smoothenAmount; i++) map = SmoothenWorld(map);
+        SaveFile save = SaveGameManager.LoadGame();
+
+        if(save != null)
+        {
+            if (save.seed == WorldManager.worldSeed)
+            {
+                Debug.Log("Loaded Game");
+                map = save.worldMap;
+            }
+        }
+
+        if (map == null)
+        {
+            Debug.Log("Generating new map!");
+            map = GenerateWorld();
+
+            for (int i = 0; i < resampleAmount; i++) map = ResampleWorld(map, map.GetLength(0) * 2 - 1);
+            //map = CreateChunks(map);
+            for (int i = 0; i < smoothenAmount; i++) map = SmoothenWorld(map);
+        }
 
         wm.SetChunkSize(chunkSize);
         mv.VisualizeMap(map);

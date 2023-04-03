@@ -6,7 +6,7 @@ using static EnumCollection;
 
 public class WorldManager : MonoBehaviour
 {
-    static int worldSeed = 1;
+    public static int worldSeed = 1;
 
     [SerializeField]
     private int seed = 1;
@@ -30,6 +30,14 @@ public class WorldManager : MonoBehaviour
         Random.InitState(GetWorldSeed());
 
         objR = GetComponent<ObjectRenderer>();
+    }
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.P))
+        {
+            SaveGameManager.SaveGame(new SaveFile(worldSeed, worldMap));
+        }
     }
 
     public void SetWorldMap(int[,] m)
@@ -92,7 +100,7 @@ public class WorldManager : MonoBehaviour
 
     private void InitializeChunks()
     {
-        chunks = new Chunk[worldMap.GetLength(0) / chunkSize, worldMap.GetLength(1) / chunkSize];
+        chunks = new Chunk[Mathf.CeilToInt((float)worldMap.GetLength(0) / chunkSize), Mathf.CeilToInt((float)worldMap.GetLength(1) / chunkSize)];
 
         for (int x = 0; x < chunks.GetLength(0); x++)
         {
@@ -109,8 +117,32 @@ public class WorldManager : MonoBehaviour
                 TileBase t = GetCurrectTile(new Vector3Int(x, 0, y));
                 c.AddTile(t);
                 c.SetBiome(dataFromTiles[t].biome);
+                c.SetNeighbors(GetNeighbors(pos));
             }
         }
+    }
+
+    private Chunk[] GetNeighbors(Vector2Int pos)
+    {
+        List<Chunk> rcList = new List<Chunk>();
+
+        for (int i = pos.x - 1; i <= pos.x + 1; i++)
+        {
+            for (int j = pos.y - 1; j <= pos.y + 1; j++)
+            {
+                if (i >= 0 && i < chunks.GetLength(0) 
+                    && j >= 0 
+                    && j < chunks.GetLength(1) 
+                    && !(i == pos.x && j == pos.y))
+                {
+                    rcList.Add(chunks[i, j]);
+                }
+            }
+        }
+
+        Chunk[] rc = rcList.ToArray();
+
+        return rc;
     }
 
     public Chunk[,] GetChunks() { return chunks; }
@@ -128,17 +160,26 @@ public class WorldManager : MonoBehaviour
         {
             for (int y = 0; y < chunks.GetLength(1); y++)
             {
-                if (chunks[x, y].CurrentBiome == BiomeType.Water)
+                Chunk c = chunks[x, y];
+                Chunk cur = objR.GetCurrentChunk();
+
+                if (c.CurrentBiome == BiomeType.Water)
                     Gizmos.color = Color.blue;
-                else if (chunks[x, y].CurrentBiome == BiomeType.Forest)
+                else if (c.CurrentBiome == BiomeType.Forest)
                     Gizmos.color = Color.green;
-                else if (chunks[x, y].CurrentBiome == BiomeType.Mountain)
+                else if (c.CurrentBiome == BiomeType.Mountain)
                     Gizmos.color = Color.gray;
-                else if (chunks[x, y].CurrentBiome == BiomeType.Desert)
+                else if (c.CurrentBiome == BiomeType.Desert)
                     Gizmos.color = Color.yellow;
 
-                if (chunks[x, y] == objR.GetCurrentChunk())
+                if (c == cur)
                     Gizmos.color = Color.red;
+
+                foreach (Chunk ch in cur.Neighbors)
+                {
+                    if (c == ch)
+                        Gizmos.color = Color.magenta;
+                }
 
                 Gizmos.DrawWireCube(new Vector3((chunkSize / 2) + (chunkSize * x), 0, (chunkSize / 2) + (chunkSize * y)), new Vector3(chunkSize, 1, chunkSize));
             }

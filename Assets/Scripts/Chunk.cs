@@ -13,6 +13,16 @@ public class Chunk
 
     private bool render = false;
 
+    public Chunk()
+    {
+        Tiles = null;
+        CurrentBiome = BiomeType.Water;
+        Resources = null;
+        Neighbors = null;
+    }
+
+    public void SetNeighbors(Chunk[] neighbors) { Neighbors = neighbors; }
+
     public void SetBiome(BiomeType biome)
     {
         CurrentBiome = biome;
@@ -46,14 +56,21 @@ public class Chunk
         if (render) resource.SetActive(true);
     }
 
-    public void RenderResources(bool rend)
+    public void RenderResources(bool rend, int dist)
     {
-        if (rend == render || this.Resources == null)
+        if (rend != render && this.Resources != null)
+        {
+            foreach (GameObject obj in this.Resources)
+                obj.SetActive(rend);
+
+            render = rend;
+        }
+
+        if (Neighbors.Length == 0 || Neighbors == null || dist == 0)
             return;
+        
+        foreach (Chunk chunk in Neighbors)
+            chunk.RenderResources(rend, dist - 1);
 
-        foreach (GameObject obj in this.Resources)
-            obj.SetActive(rend);
-
-        render = rend;
     }
 }

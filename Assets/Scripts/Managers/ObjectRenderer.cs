@@ -10,6 +10,8 @@ public class ObjectRenderer : MonoBehaviour
 
     private WorldManager wm = null;
 
+    [SerializeField]
+    private int renderDistance = 1;
     private int chunkSize = 0;
 
     private bool newChunk = true;
@@ -49,8 +51,8 @@ public class ObjectRenderer : MonoBehaviour
         if (!newChunk)
             return; 
 
-        currentChunk?.RenderResources(true);
-        previousChunk?.RenderResources(false);
+        previousChunk?.RenderResources(false, renderDistance);
+        currentChunk?.RenderResources(true, renderDistance);
 
         newChunk = false;
     }
