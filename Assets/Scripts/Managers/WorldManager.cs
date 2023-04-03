@@ -10,6 +10,8 @@ public class WorldManager : MonoBehaviour
 
     [SerializeField]
     private int seed = 1;
+    private int chunkSize = 0;
+    private int[,] worldMap = null;
 
     private Tilemap map = null;
 
@@ -17,23 +19,24 @@ public class WorldManager : MonoBehaviour
     private List<TileData> tileDatas = null;
 
     private Dictionary<TileBase, TileData> dataFromTiles;
-    private Dictionary<Vector2, int[,]> chunkData;
 
-    private int[,] worldMap = null;
+    private Chunk[,] chunks = new Chunk[0, 0];
 
-    private int chunkSize = 0;
+    private ObjectRenderer objR = null;
 
     private void Awake()
     {
         SetWorldSeed(seed);
         Random.InitState(GetWorldSeed());
+
+        objR = GetComponent<ObjectRenderer>();
     }
 
     public void SetWorldMap(int[,] m)
     {
         worldMap = m;
     }
-    
+
     public void AssignTileData()
     {
         map = FindObjectOfType<Tilemap>();
@@ -47,6 +50,7 @@ public class WorldManager : MonoBehaviour
             }
         }
 
+        InitializeChunks();
         CalculateResourceSpawns();
     }
 
@@ -60,11 +64,11 @@ public class WorldManager : MonoBehaviour
         GameObject resParent = new("Resource Parent");
         resParent.transform.position = Vector3.zero;
 
-        for (int i = 0; i < worldMap.GetLength(0); i++)
+        for (int x = 0; x < worldMap.GetLength(0); x++)
         {
             for (int y = 0; y < worldMap.GetLength(1); y++)
             {
-                TileBase tile = GetCurrectTile(new Vector3Int(i, 0, y));
+                TileBase tile = GetCurrectTile(new Vector3Int(x, 0, y));
 
                 var data = dataFromTiles[tile];
 
@@ -77,15 +81,67 @@ public class WorldManager : MonoBehaviour
                     continue;
 
                 int res = Random.Range(0, data.resources.Length);
-                GameObject obj = Instantiate(data.resources[res], new Vector3(i + Random.Range(.2f, .7f), 0, y + Random.Range(.2f, .7f)), Quaternion.identity);
+                GameObject obj = Instantiate(data.resources[res], new Vector3(x + Random.Range(.2f, .7f), 0, y + Random.Range(.2f, .7f)), Quaternion.identity);
                 obj.transform.rotation = Quaternion.Euler(30, 0, 0);
                 obj.transform.parent = resParent.transform;
+                obj.SetActive(false);
+                chunks[x / chunkSize, y / chunkSize].AddResource(obj);
             }
         }
     }
 
-    public void SetChunkData(Dictionary<Vector2, int[,]> data, int cz) { chunkData = data; chunkSize = cz; }
-    public void GetChunkData(out Dictionary<Vector2, int[,]> data, out int chunkSize) { data = chunkData; chunkSize = this.chunkSize; }
+    private void InitializeChunks()
+    {
+        chunks = new Chunk[worldMap.GetLength(0) / chunkSize, worldMap.GetLength(1) / chunkSize];
+
+        for (int x = 0; x < chunks.GetLength(0); x++)
+        {
+            for (int y = 0; y < chunks.GetLength(1); y++)
+                chunks[x, y] = new Chunk();
+        }
+
+        for (int x = 0; x < worldMap.GetLength(0); x++)
+        {
+            for (int y = 0; y < worldMap.GetLength(0); y++)
+            {
+                Vector2Int pos = new(x / chunkSize, y / chunkSize);
+                Chunk c = chunks[pos.x, pos.y];
+                TileBase t = GetCurrectTile(new Vector3Int(x, 0, y));
+                c.AddTile(t);
+                c.SetBiome(dataFromTiles[t].biome);
+            }
+        }
+    }
+
+    public Chunk[,] GetChunks() { return chunks; }
+    public void SetChunkSize(int size) { chunkSize = size; }
+    public int GetChunkSize() { return chunkSize; }
     static int GetWorldSeed() { return worldSeed; }
     public static void SetWorldSeed(int s) { worldSeed = s; }
+
+    private void OnDrawGizmos()
+    {
+        if (!Application.isPlaying)
+            return;
+
+        for (int x = 0; x < chunks.GetLength(0); x++)
+        {
+            for (int y = 0; y < chunks.GetLength(1); y++)
+            {
+                if (chunks[x, y].CurrentBiome == BiomeType.Water)
+                    Gizmos.color = Color.blue;
+                else if (chunks[x, y].CurrentBiome == BiomeType.Forest)
+                    Gizmos.color = Color.green;
+                else if (chunks[x, y].CurrentBiome == BiomeType.Mountain)
+                    Gizmos.color = Color.gray;
+                else if (chunks[x, y].CurrentBiome == BiomeType.Desert)
+                    Gizmos.color = Color.yellow;
+
+                if (chunks[x, y] == objR.GetCurrentChunk())
+                    Gizmos.color = Color.red;
+
+                Gizmos.DrawWireCube(new Vector3((chunkSize / 2) + (chunkSize * x), 0, (chunkSize / 2) + (chunkSize * y)), new Vector3(chunkSize, 1, chunkSize));
+            }
+        }
+    }
 }

@@ -23,8 +23,6 @@ public class MapGenerator : MonoBehaviour
     [Range(0, 100)]
     private Vector2Int mountainPercentRange = new(85, 100);
 
-    private Dictionary<Vector2, int[,]> chunkData;
-
     private int[,] map;
 
     private MapVisualizer mv = null;
@@ -34,34 +32,15 @@ public class MapGenerator : MonoBehaviour
     {
         mv = GetComponent<MapVisualizer>();
         wm = FindObjectOfType<WorldManager>();
-    }
-
-    private void Start()
-    {
+        
         map = GenerateWorld();
 
         for (int i = 0; i < resampleAmount; i++) map = ResampleWorld(map, map.GetLength(0) * 2 - 1);
         map = CreateChunks(map);
         for (int i = 0; i < smoothenAmount; i++) map = SmoothenWorld(map);
 
-        wm.SetChunkData(chunkData, chunkSize);
+        wm.SetChunkSize(chunkSize);
         mv.VisualizeMap(map);
-    }
-
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.P))
-        {
-            WorldManager.SetWorldSeed(Random.Range(0, 1000000000));
-            map = GenerateWorld();
-
-            for (int i = 0; i < resampleAmount; i++) map = ResampleWorld(map, map.GetLength(0) * 2 - 1);
-            map = CreateChunks(map);
-            for (int i = 0; i < smoothenAmount; i++) map = SmoothenWorld(map);
-
-            wm.SetChunkData(chunkData, chunkSize);
-            mv.VisualizeMap(map);
-        }
     }
 
     private int[,] GenerateWorld()
@@ -131,8 +110,6 @@ public class MapGenerator : MonoBehaviour
 
     int[,] CreateChunks(int[,] oldWorld)
     {
-        chunkData = new Dictionary<Vector2, int[,]>();
-
         int oldWidth = oldWorld.GetLength(0);
         int oldHeight = oldWorld.GetLength(1);
         int newWidth = oldWidth * chunkSize;
@@ -154,15 +131,6 @@ public class MapGenerator : MonoBehaviour
                         int newTileX = newX + cx;
                         int newTileY = newY + cy;
                         newWorld[newTileX, newTileY] = tile;
-
-                        if (tile != 0)
-                        {
-                            Vector2 chunkPos = new Vector2(x, y);
-                            if (!chunkData.ContainsKey(chunkPos))
-                                chunkData.Add(chunkPos, new int[chunkSize, chunkSize]);
-
-                            chunkData[chunkPos][cx, cy] = tile;
-                        }
                     }
                 }
             }
@@ -297,17 +265,5 @@ public class MapGenerator : MonoBehaviour
             return 3;
 
         return 0;
-    }
-
-    private void OnDrawGizmos()
-    {
-        for (int x = 0; x < 50; x++)
-        {
-            for (int y = 0; y < 50; y++)
-            {
-                Gizmos.color = Color.green;
-                Gizmos.DrawWireCube(new Vector3((chunkSize / 2) + (chunkSize * x), 0, (chunkSize / 2) + (chunkSize * y)), new Vector3(chunkSize, 1, chunkSize));
-            }
-        }
     }
 }
