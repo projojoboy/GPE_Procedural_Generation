@@ -32,7 +32,7 @@ public class MapGenerator : MonoBehaviour
 
         SaveFile save = SaveGameManager.LoadGame();
 
-        if(save != null)
+        if (save != null)
         {
             if (save.seed == WorldManager.worldSeed)
             {
@@ -111,7 +111,7 @@ public class MapGenerator : MonoBehaviour
 
                 if (a == d && b == c) t = Random.Range(0, 2) == 0 ? a : b;
                 else if (a == d) t = a;
-                else if (a == d) t = b;
+                else if (b == c) t = b;
 
                 oldWorld[x, y] = t;
             }
